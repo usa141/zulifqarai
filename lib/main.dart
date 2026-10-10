@@ -10,10 +10,21 @@ import 'core/services/signal_detector_service.dart';
 import 'core/widgets/sword_logo.dart';
 import 'features/auth/login_screen.dart';
 import 'features/shell_screen.dart';
+import 'overlay_bubble.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const TradeJarvisApp());
+}
+
+// IMPORTANT: Entry point required for System Floating Overlay Window outside the app
+@pragma("vm:entry-point")
+void overlayMain() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: OverlayBubble(),
+  ));
 }
 
 class TradeJarvisApp extends StatelessWidget {

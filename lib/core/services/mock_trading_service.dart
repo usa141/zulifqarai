@@ -4,7 +4,7 @@ import 'market_api_service.dart';
 
 class MockTradingService extends ChangeNotifier {
   PortfolioSummary _portfolio = PortfolioSummary(
-    totalValue: 24850.75,
+    totalValue: 25480.75,
     availableBalance: 8420.50,
     dailyPnl: 1240.30,
     dailyPnlPercentage: 5.25,
@@ -17,6 +17,7 @@ class MockTradingService extends ChangeNotifier {
       name: 'Bitcoin',
       category: 'Crypto',
       price: 91450.00,
+      previousPrice: 91400.00,
       change24h: 3.45,
       volume24h: 42100000000.0,
       high24h: 92100.00,
@@ -31,6 +32,7 @@ class MockTradingService extends ChangeNotifier {
       name: 'Ethereum',
       category: 'Crypto',
       price: 3380.50,
+      previousPrice: 3375.00,
       change24h: 4.82,
       volume24h: 21400000000.0,
       high24h: 3420.00,
@@ -45,6 +47,7 @@ class MockTradingService extends ChangeNotifier {
       name: 'Solana',
       category: 'Crypto',
       price: 212.40,
+      previousPrice: 213.00,
       change24h: -1.20,
       volume24h: 7800000000.0,
       high24h: 218.00,
@@ -55,10 +58,41 @@ class MockTradingService extends ChangeNotifier {
       sparkline: [218, 215, 216, 210, 211, 209, 212.4],
     ),
     MarketAsset(
+      symbol: 'XRP/USDT',
+      name: 'Ripple',
+      category: 'Crypto',
+      price: 1.42,
+      previousPrice: 1.40,
+      change24h: 6.15,
+      volume24h: 5200000000.0,
+      high24h: 1.48,
+      low24h: 1.32,
+      marketBias: 'Bullish',
+      rsi: 71.0,
+      macd: 0.12,
+      sparkline: [1.32, 1.35, 1.38, 1.40, 1.42],
+    ),
+    MarketAsset(
+      symbol: 'BNB/USDT',
+      name: 'BNB',
+      category: 'Crypto',
+      price: 645.20,
+      previousPrice: 642.00,
+      change24h: 2.10,
+      volume24h: 1800000000.0,
+      high24h: 652.00,
+      low24h: 630.00,
+      marketBias: 'Bullish',
+      rsi: 58.2,
+      macd: 8.4,
+      sparkline: [630, 638, 640, 645.2],
+    ),
+    MarketAsset(
       symbol: 'NVDA',
       name: 'NVIDIA Corp',
       category: 'Stocks',
       price: 138.20,
+      previousPrice: 137.50,
       change24h: 2.15,
       volume24h: 14500000000.0,
       high24h: 139.50,
@@ -73,6 +107,7 @@ class MockTradingService extends ChangeNotifier {
       name: 'Euro / US Dollar',
       category: 'Forex',
       price: 1.0542,
+      previousPrice: 1.0545,
       change24h: -0.15,
       volume24h: 53000000000.0,
       high24h: 1.0580,
@@ -113,43 +148,14 @@ class MockTradingService extends ChangeNotifier {
     ),
   ];
 
-  final List<TradingSignal> _signals = [
-    TradingSignal(
-      id: 'sig_1',
-      asset: 'BTC/USDT',
-      direction: 'LONG',
-      timeframe: '4H',
-      entryMin: 90800.00,
-      entryMax: 91200.00,
-      stopLoss: 89700.00,
-      takeProfits: [92800.00, 94500.00, 96000.00],
-      confidence: 84,
-      strategy: 'Liquidity Sweep + Trend Alignment',
-      timestamp: DateTime.now().subtract(const Duration(minutes: 35)),
-      explanation: 'Break of structure confirmed on 4H chart following a liquidity sweep below \$89.5k support. Volume expansion and positive MACD crossover indicate strong continuation.',
-    ),
-    TradingSignal(
-      id: 'sig_2',
-      asset: 'ETH/USDT',
-      direction: 'LONG',
-      timeframe: '1H',
-      entryMin: 3350.00,
-      entryMax: 3375.00,
-      stopLoss: 3290.00,
-      takeProfits: [3450.00, 3550.00],
-      confidence: 79,
-      strategy: 'EMA Ribbon Bounce + VWAP Support',
-      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-      explanation: 'ETH tested 20 EMA and bounced cleanly with surging buy volume. RSI is rebounding from neutral 50 level.',
-    ),
-  ];
+  final List<TradingSignal> _signals = [];
 
   final List<NewsItem> _news = [
     NewsItem(
       id: 'news_1',
       title: 'Bitcoin Surges Past \$91K as Institutional Inflows Hit New Weekly Record',
       source: 'Bloomberg Crypto',
-      timeAgo: '15m ago',
+      timeAgo: '5m ago',
       sentiment: 'Positive',
       impact: 'High',
     ),
@@ -157,7 +163,7 @@ class MockTradingService extends ChangeNotifier {
       id: 'news_2',
       title: 'Ethereum Layer 2 TVL Reaches All-Time High Amid DeFi Expansion',
       source: 'CoinDesk',
-      timeAgo: '1h ago',
+      timeAgo: '25m ago',
       sentiment: 'Positive',
       impact: 'Medium',
     ),
@@ -165,32 +171,15 @@ class MockTradingService extends ChangeNotifier {
       id: 'news_3',
       title: 'Global Markets Steady Ahead of Upcoming US Inflation Data Release',
       source: 'Reuters',
-      timeAgo: '3h ago',
+      timeAgo: '1h ago',
       sentiment: 'Neutral',
       impact: 'High',
     ),
   ];
 
-  final List<AlertItem> _alerts = [
-    AlertItem(
-      id: 'alt_1',
-      title: 'Take-Profit Target Approaching',
-      description: 'BTC/USDT position is within 1% of TP1 (\$92,800).',
-      time: '5m ago',
-      isRead: false,
-    ),
-    AlertItem(
-      id: 'alt_2',
-      title: 'High Volatility Warning',
-      description: 'SOL/USDT experiencing rapid order book shifts.',
-      time: '1h ago',
-      isRead: true,
-    ),
-  ];
-
   final List<ChatMessage> _chatHistory = [
     ChatMessage(
-      text: "JARVIS online. All market feeds connected. How may I assist your trading operations today?",
+      text: "Zulfiqar JARVIS online. Live Binance market streams linked. How may I assist your trading operations today?",
       isUser: false,
       timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
     ),
@@ -201,7 +190,6 @@ class MockTradingService extends ChangeNotifier {
   List<Position> get positions => _positions;
   List<TradingSignal> get signals => _signals;
   List<NewsItem> get news => _news;
-  List<AlertItem> get alerts => _alerts;
   List<ChatMessage> get chatHistory => _chatHistory;
 
   void updateWithLiveTickers(Map<String, LiveTicker> tickers) {
@@ -221,6 +209,7 @@ class MockTradingService extends ChangeNotifier {
           name: asset.name,
           category: asset.category,
           price: ticker.price,
+          previousPrice: ticker.previousPrice,
           change24h: ticker.change24h,
           volume24h: ticker.volume24h,
           high24h: ticker.high24h,
@@ -229,11 +218,13 @@ class MockTradingService extends ChangeNotifier {
           rsi: asset.rsi,
           macd: asset.macd,
           sparkline: updatedSparkline,
+          lastTickTime: ticker.lastTick,
         );
       }
       return asset;
     }).toList();
 
+    double totalPnl = 0.0;
     _positions = _positions.map((pos) {
       if (tickers.containsKey(pos.symbol)) {
         final ticker = tickers[pos.symbol]!;
@@ -243,6 +234,7 @@ class MockTradingService extends ChangeNotifier {
             : (pos.entryPrice - price) * pos.size * pos.leverage;
         final pnlPercent = ((price - pos.entryPrice) / pos.entryPrice) * 100 * pos.leverage;
 
+        totalPnl += pnl;
         hasChanges = true;
         return Position(
           id: pos.id,
@@ -256,14 +248,74 @@ class MockTradingService extends ChangeNotifier {
           pnlPercentage: pnlPercent,
           stopLoss: pos.stopLoss,
           takeProfit: pos.takeProfit,
+          openTime: pos.openTime,
         );
+      } else {
+        totalPnl += pos.pnl;
       }
       return pos;
     }).toList();
 
     if (hasChanges) {
+      final baseBalance = 20000.0;
+      final totalValue = baseBalance + totalPnl;
+      final dailyPnlPercent = (totalPnl / baseBalance) * 100;
+
+      _portfolio = PortfolioSummary(
+        totalValue: double.parse(totalValue.toStringAsFixed(2)),
+        availableBalance: double.parse((_portfolio.availableBalance).toStringAsFixed(2)),
+        dailyPnl: double.parse(totalPnl.toStringAsFixed(2)),
+        dailyPnlPercentage: double.parse(dailyPnlPercent.toStringAsFixed(2)),
+        isPaperTrading: _portfolio.isPaperTrading,
+      );
+
       notifyListeners();
     }
+  }
+
+  void openPosition({
+    required String symbol,
+    required String type,
+    required double entryPrice,
+    required double size,
+    required double leverage,
+    required double stopLoss,
+    required double takeProfit,
+  }) {
+    final newPos = Position(
+      id: 'pos_${DateTime.now().millisecondsSinceEpoch}',
+      symbol: symbol,
+      type: type,
+      entryPrice: entryPrice,
+      currentPrice: entryPrice,
+      size: size,
+      leverage: leverage,
+      pnl: 0.0,
+      pnlPercentage: 0.0,
+      stopLoss: stopLoss,
+      takeProfit: takeProfit,
+      openTime: DateTime.now(),
+    );
+
+    _positions.insert(0, newPos);
+    notifyListeners();
+  }
+
+  void closePosition(String id) {
+    _positions.removeWhere((pos) => pos.id == id);
+    notifyListeners();
+  }
+
+  void closeAllPositions() {
+    _positions.clear();
+    _portfolio = PortfolioSummary(
+      totalValue: 20000.0,
+      availableBalance: 20000.0,
+      dailyPnl: 0.0,
+      dailyPnlPercentage: 0.0,
+      isPaperTrading: _portfolio.isPaperTrading,
+    );
+    notifyListeners();
   }
 
   void addChatMessage(String query, String response) {

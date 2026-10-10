@@ -44,30 +44,22 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Try initializing Firebase
       await Firebase.initializeApp();
       _isFirebaseInitialized = true;
 
-      // Listen to Firebase Auth state changes
+      final currentFbUser = fb_auth.FirebaseAuth.instance.currentUser;
+      if (currentFbUser != null) {
+        await _loadProfileFromFbUser(currentFbUser);
+        _isLoading = false;
+        notifyListeners();
+      }
+
       fb_auth.FirebaseAuth.instance.authStateChanges().listen((fb_auth.User? fbUser) async {
         if (fbUser != null) {
-          final prefs = await SharedPreferences.getInstance();
-          final biometric = prefs.getBool('biometric_enabled') ?? false;
-          final geminiKey = await _storage.read(key: 'gemini_api_key');
-          final binanceKey = await _storage.read(key: 'binance_api_key');
-
-          _user = UserProfile(
-            uid: fbUser.uid,
-            email: fbUser.email ?? 'trader@zulfiqar.ai',
-            name: fbUser.displayName ?? (fbUser.email?.split('@').first ?? 'Trader'),
-            biometricEnabled: biometric,
-            binanceApiKey: binanceKey,
-            geminiApiKey: geminiKey,
-          );
-          _isAuthenticated = true;
+          await _loadProfileFromFbUser(fbUser);
         } else {
-          _isAuthenticated = false;
-          _user = null;
+          // If Firebase has no user, check local persistent SharedPreferences session
+          await _restoreLocalSession();
         }
         _isLoading = false;
         notifyListeners();
@@ -75,16 +67,38 @@ class AuthService extends ChangeNotifier {
       return;
     } catch (e) {
       if (kDebugMode) {
-        print('Firebase not yet configured locally ($e). Using secure local auth session fallback.');
+        print('Firebase initialization fallback: $e');
       }
     }
 
     await _restoreLocalSession();
   }
 
+  Future<void> _loadProfileFromFbUser(fb_auth.User fbUser) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_logged_in', true);
+    await prefs.setString('user_email', fbUser.email ?? '');
+    await prefs.setString('user_name', fbUser.displayName ?? (fbUser.email?.split('@').first ?? 'Trader'));
+
+    final biometric = prefs.getBool('biometric_enabled') ?? false;
+    final geminiKey = await _storage.read(key: 'gemini_api_key');
+    final binanceKey = await _storage.read(key: 'binance_api_key');
+
+    _user = UserProfile(
+      uid: fbUser.uid,
+      email: fbUser.email ?? 'trader@zulfiqar.ai',
+      name: fbUser.displayName ?? (fbUser.email?.split('@').first ?? 'Trader'),
+      biometricEnabled: biometric,
+      binanceApiKey: binanceKey,
+      geminiApiKey: geminiKey,
+    );
+    _isAuthenticated = true;
+  }
+
   Future<void> _restoreLocalSession() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
       final savedEmail = prefs.getString('user_email');
       final savedName = prefs.getString('user_name');
       final savedUid = prefs.getString('user_uid') ?? 'local_user_1';
@@ -93,7 +107,7 @@ class AuthService extends ChangeNotifier {
       final geminiKey = await _storage.read(key: 'gemini_api_key');
       final binanceKey = await _storage.read(key: 'binance_api_key');
 
-      if (savedEmail != null && savedEmail.isNotEmpty) {
+      if (isLoggedIn && savedEmail != null && savedEmail.isNotEmpty) {
         _user = UserProfile(
           uid: savedUid,
           email: savedEmail,
@@ -103,11 +117,16 @@ class AuthService extends ChangeNotifier {
           geminiApiKey: geminiKey,
         );
         _isAuthenticated = true;
+      } else {
+        _isAuthenticated = false;
+        _user = null;
       }
     } catch (e) {
       if (kDebugMode) {
         print('Error restoring auth session: $e');
       }
+      _isAuthenticated = false;
+      _user = null;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -125,7 +144,9 @@ class AuthService extends ChangeNotifier {
           password: password,
         );
         if (credential.user != null) {
+          await _loadProfileFromFbUser(credential.user!);
           _isLoading = false;
+          notifyListeners();
           return true;
         }
       } catch (e) {
@@ -135,13 +156,14 @@ class AuthService extends ChangeNotifier {
       }
     }
 
-    // Fallback to local session
+    // Local session fallback
     await Future.delayed(const Duration(milliseconds: 600));
     if (email.trim().isNotEmpty && password.length >= 6) {
       final prefs = await SharedPreferences.getInstance();
       final name = email.split('@').first;
       final uid = 'usr_${DateTime.now().millisecondsSinceEpoch}';
 
+      await prefs.setBool('is_logged_in', true);
       await prefs.setString('user_email', email.trim());
       await prefs.setString('user_name', name);
       await prefs.setString('user_uid', uid);
@@ -175,7 +197,9 @@ class AuthService extends ChangeNotifier {
         );
         if (credential.user != null) {
           await credential.user!.updateDisplayName(name.trim());
+          await _loadProfileFromFbUser(credential.user!);
           _isLoading = false;
+          notifyListeners();
           return true;
         }
       } catch (e) {
@@ -185,12 +209,13 @@ class AuthService extends ChangeNotifier {
       }
     }
 
-    // Fallback to local registration
+    // Local registration fallback
     await Future.delayed(const Duration(milliseconds: 600));
     if (email.contains('@') && password.length >= 6) {
       final prefs = await SharedPreferences.getInstance();
       final uid = 'usr_${DateTime.now().millisecondsSinceEpoch}';
 
+      await prefs.setBool('is_logged_in', true);
       await prefs.setString('user_email', email.trim());
       await prefs.setString('user_name', name.trim());
       await prefs.setString('user_uid', uid);
@@ -265,6 +290,7 @@ class AuthService extends ChangeNotifier {
     }
 
     final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_logged_in', false);
     await prefs.remove('user_email');
     await prefs.remove('user_name');
     await prefs.remove('user_uid');

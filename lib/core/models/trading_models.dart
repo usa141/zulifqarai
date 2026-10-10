@@ -3,6 +3,7 @@ class MarketAsset {
   final String name;
   final String category;
   double price;
+  double previousPrice;
   double change24h;
   double volume24h;
   double high24h;
@@ -11,12 +12,14 @@ class MarketAsset {
   double rsi;
   double macd;
   List<double> sparkline;
+  DateTime? lastTickTime;
 
   MarketAsset({
     required this.symbol,
     required this.name,
     required this.category,
     required this.price,
+    this.previousPrice = 0.0,
     required this.change24h,
     required this.volume24h,
     required this.high24h,
@@ -25,7 +28,10 @@ class MarketAsset {
     required this.rsi,
     required this.macd,
     required this.sparkline,
+    this.lastTickTime,
   });
+
+  bool get isPriceUp => price >= previousPrice;
 }
 
 class Position {
@@ -40,6 +46,7 @@ class Position {
   final double pnlPercentage;
   final double stopLoss;
   final double takeProfit;
+  final DateTime openTime;
 
   Position({
     required this.id,
@@ -53,7 +60,8 @@ class Position {
     required this.pnlPercentage,
     required this.stopLoss,
     required this.takeProfit,
-  });
+    DateTime? openTime,
+  }) : openTime = openTime ?? DateTime.now();
 }
 
 class TradingSignal {
@@ -93,6 +101,7 @@ class NewsItem {
   final String timeAgo;
   final String sentiment; // Positive, Negative, Neutral
   final String impact; // High, Medium, Low
+  final String? url;
 
   NewsItem({
     required this.id,
@@ -101,6 +110,7 @@ class NewsItem {
     required this.timeAgo,
     required this.sentiment,
     required this.impact,
+    this.url,
   });
 }
 

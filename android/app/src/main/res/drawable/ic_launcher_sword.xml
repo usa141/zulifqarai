@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#0A0E17"
+        android:pathData="M0,0h108v108h-108z"/>
+    <!-- Outer Cyan Ring -->
+    <path
+        android:strokeColor="#00E5FF"
+        android:strokeWidth="3"
+        android:fillColor="#131B2E"
+        android:pathData="M54,14 A40,40 0 1,0 54,94 A40,40 0 1,0 54,14 Z"/>
+    <!-- Zulfiqar Dual Blade -->
+    <path
+        android:fillColor="#00E5FF"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:pathData="M42,26 L54,36 L66,26 C72,50 62,68 62,68 L82,68 L82,74 L58,74 L57,86 C57,89 51,89 51,86 L50,74 L26,74 L26,68 L46,68 C46,68 36,50 42,26 Z"/>
+    <!-- Energy Channel -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M54,36 L54,68"/>
+</vector>
