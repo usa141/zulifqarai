@@ -75,7 +75,7 @@ class WeatherService extends ChangeNotifier {
     } catch (e) {
       _errorMessage = 'Weather data unavailable: $e';
       if (kDebugMode) {
-        print('Error fetching weather: $e');
+        debugPrint('Error fetching weather: $e');
       }
     } finally {
       // Fallback if network is offline

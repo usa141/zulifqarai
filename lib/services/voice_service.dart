@@ -41,7 +41,7 @@ class VoiceService extends ChangeNotifier {
     } catch (e) {
       _isAvailable = false;
       if (kDebugMode) {
-        print('Error initializing speech recognition: $e');
+        debugPrint('Error initializing speech recognition: $e');
       }
     }
   }
@@ -71,6 +71,8 @@ class VoiceService extends ChangeNotifier {
       notifyListeners();
 
       await _speech.listen(
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 4),
         onResult: (result) {
           _recognizedText = result.recognizedWords;
           notifyListeners();

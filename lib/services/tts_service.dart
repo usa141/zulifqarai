@@ -36,7 +36,7 @@ class TtsService extends ChangeNotifier {
       });
     } catch (e) {
       if (kDebugMode) {
-        print('Error initializing TTS: $e');
+        debugPrint('Error initializing TTS: $e');
       }
     }
   }
@@ -48,7 +48,7 @@ class TtsService extends ChangeNotifier {
       await _flutterTts.speak(text);
     } catch (e) {
       if (kDebugMode) {
-        print('Error speaking text: $e');
+        debugPrint('Error speaking text: $e');
       }
     }
   }

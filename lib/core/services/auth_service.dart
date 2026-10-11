@@ -28,11 +28,13 @@ class AuthService extends ChangeNotifier {
   bool _isAuthenticated = false;
   bool _isLoading = true;
   bool _isFirebaseInitialized = false;
+  String? _lastError;
   UserProfile? _user;
 
   bool get isAuthenticated => _isAuthenticated;
   bool get isLoading => _isLoading;
   bool get isFirebaseInitialized => _isFirebaseInitialized;
+  String? get lastError => _lastError;
   UserProfile? get user => _user;
 
   AuthService() {
@@ -58,7 +60,6 @@ class AuthService extends ChangeNotifier {
         if (fbUser != null) {
           await _loadProfileFromFbUser(fbUser);
         } else {
-          // If Firebase has no user, check local persistent SharedPreferences session
           await _restoreLocalSession();
         }
         _isLoading = false;
@@ -67,7 +68,7 @@ class AuthService extends ChangeNotifier {
       return;
     } catch (e) {
       if (kDebugMode) {
-        print('Firebase initialization fallback: $e');
+        debugPrint('Firebase initialization fallback: $e');
       }
     }
 
@@ -93,6 +94,7 @@ class AuthService extends ChangeNotifier {
       geminiApiKey: geminiKey,
     );
     _isAuthenticated = true;
+    _lastError = null;
   }
 
   Future<void> _restoreLocalSession() async {
@@ -117,13 +119,14 @@ class AuthService extends ChangeNotifier {
           geminiApiKey: geminiKey,
         );
         _isAuthenticated = true;
+        _lastError = null;
       } else {
         _isAuthenticated = false;
         _user = null;
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error restoring auth session: $e');
+        debugPrint('Error restoring auth session: $e');
       }
       _isAuthenticated = false;
       _user = null;
@@ -135,6 +138,7 @@ class AuthService extends ChangeNotifier {
 
   Future<bool> login(String email, String password) async {
     _isLoading = true;
+    _lastError = null;
     notifyListeners();
 
     if (_isFirebaseInitialized) {
@@ -150,8 +154,9 @@ class AuthService extends ChangeNotifier {
           return true;
         }
       } catch (e) {
+        _lastError = e.toString().replaceFirst(RegExp(r'\[.*?\]\s*'), '');
         if (kDebugMode) {
-          print('Firebase login failed: $e');
+          debugPrint('Firebase login failed: $e');
         }
       }
     }
@@ -176,10 +181,12 @@ class AuthService extends ChangeNotifier {
       );
       _isAuthenticated = true;
       _isLoading = false;
+      _lastError = null;
       notifyListeners();
       return true;
     }
 
+    _lastError ??= 'Invalid email or password (min 6 characters required).';
     _isLoading = false;
     notifyListeners();
     return false;
@@ -187,6 +194,7 @@ class AuthService extends ChangeNotifier {
 
   Future<bool> register(String name, String email, String password) async {
     _isLoading = true;
+    _lastError = null;
     notifyListeners();
 
     if (_isFirebaseInitialized) {
@@ -203,8 +211,9 @@ class AuthService extends ChangeNotifier {
           return true;
         }
       } catch (e) {
+        _lastError = e.toString().replaceFirst(RegExp(r'\[.*?\]\s*'), '');
         if (kDebugMode) {
-          print('Firebase register failed: $e');
+          debugPrint('Firebase register failed: $e');
         }
       }
     }
@@ -228,10 +237,12 @@ class AuthService extends ChangeNotifier {
       );
       _isAuthenticated = true;
       _isLoading = false;
+      _lastError = null;
       notifyListeners();
       return true;
     }
 
+    _lastError ??= 'Registration failed. Check your inputs.';
     _isLoading = false;
     notifyListeners();
     return false;
@@ -284,7 +295,7 @@ class AuthService extends ChangeNotifier {
         await fb_auth.FirebaseAuth.instance.signOut();
       } catch (e) {
         if (kDebugMode) {
-          print('Firebase signout error: $e');
+          debugPrint('Firebase signout error: $e');
         }
       }
     }
@@ -298,6 +309,7 @@ class AuthService extends ChangeNotifier {
     _user = null;
     _isAuthenticated = false;
     _isLoading = false;
+    _lastError = null;
     notifyListeners();
   }
 }
