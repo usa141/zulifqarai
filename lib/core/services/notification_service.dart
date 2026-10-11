@@ -1,5 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class NotificationLogItem {
   final String id;
@@ -18,20 +21,24 @@ class NotificationLogItem {
 }
 
 class NotificationService extends ChangeNotifier {
+  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  
   bool _signalAlertsEnabled = true;
   bool _priceTargetAlertsEnabled = true;
   bool _riskAlertsEnabled = true;
+  String? _fcmToken;
 
   final List<NotificationLogItem> _notificationHistory = [];
 
   bool get signalAlertsEnabled => _signalAlertsEnabled;
   bool get priceTargetAlertsEnabled => _priceTargetAlertsEnabled;
   bool get riskAlertsEnabled => _riskAlertsEnabled;
+  String? get fcmToken => _fcmToken;
   List<NotificationLogItem> get notificationHistory => _notificationHistory;
 
   NotificationService() {
     _loadPreferences();
-    _initSampleHistory();
+    _initNotifications();
   }
 
   Future<void> _loadPreferences() async {
@@ -43,35 +50,48 @@ class NotificationService extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       if (kDebugMode) {
-        print('Error loading notification preferences: $e');
+        debugPrint('Error loading notification preferences: $e');
       }
     }
   }
 
-  void _initSampleHistory() {
-    _notificationHistory.addAll([
-      NotificationLogItem(
-        id: 'notif_1',
-        title: '🎯 High-Confidence Signal Detected',
-        body: 'BTC/USDT LONG signal generated with 88% confidence score. Target: \$93,500.',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 20)),
-        category: 'Signal',
-      ),
-      NotificationLogItem(
-        id: 'notif_2',
-        title: '📈 Take-Profit Target Approaching',
-        body: 'ETH/USDT position is within 1% of TP1 (\$3,450).',
-        timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-        category: 'PriceAlert',
-      ),
-      NotificationLogItem(
-        id: 'notif_3',
-        title: '⚠️ Risk Management Notice',
-        body: 'Daily portfolio P&L is +5.25%. Risk trailing stop-loss activated.',
-        timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-        category: 'Risk',
-      ),
-    ]);
+  Future<void> _initNotifications() async {
+    try {
+      // 1. Initialize Local Device Push Notifications
+      const androidInit = AndroidInitializationSettings('@drawable/ic_launcher_sword');
+      const initSettings = InitializationSettings(android: androidInit);
+
+      await _localNotifications.initialize(initSettings);
+
+      // 2. Initialize Firebase Cloud Messaging (FCM)
+      final messaging = FirebaseMessaging.instance;
+      final settings = await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        _fcmToken = await messaging.getToken();
+        notifyListeners();
+
+        // Handle FCM Foreground Messages
+        FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+          final notification = message.notification;
+          if (notification != null) {
+            sendPushNotification(
+              notification.title ?? 'Zulfiqar AI Alert',
+              notification.body ?? 'New market signal update received',
+              'Signal',
+            );
+          }
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Notification initialization fallback: $e');
+      }
+    }
   }
 
   Future<void> toggleSignalAlerts(bool enabled) async {
@@ -95,7 +115,7 @@ class NotificationService extends ChangeNotifier {
     await prefs.setBool('notif_risk', enabled);
   }
 
-  void sendPushNotification(String title, String body, String category) {
+  Future<void> sendPushNotification(String title, String body, String category) async {
     if ((category == 'Signal' && !_signalAlertsEnabled) ||
         (category == 'PriceAlert' && !_priceTargetAlertsEnabled) ||
         (category == 'Risk' && !_riskAlertsEnabled)) {
@@ -112,5 +132,29 @@ class NotificationService extends ChangeNotifier {
 
     _notificationHistory.insert(0, item);
     notifyListeners();
+
+    try {
+      const androidDetails = AndroidNotificationDetails(
+        'zulfiqar_signals_channel',
+        'Zulfiqar Signals & Alerts',
+        channelDescription: 'Real-time push notifications for trading signals and price alerts',
+        importance: Importance.high,
+        priority: Priority.high,
+        color: Color(0xFF00E5FF),
+      );
+
+      const notificationDetails = NotificationDetails(android: androidDetails);
+
+      await _localNotifications.show(
+        DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        title,
+        body,
+        notificationDetails,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error showing local notification: $e');
+      }
+    }
   }
 }

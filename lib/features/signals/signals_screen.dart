@@ -5,7 +5,7 @@ import '../../core/services/market_api_service.dart';
 import '../../core/services/signal_detector_service.dart';
 
 class SignalsScreen extends StatelessWidget {
-  const SignalsScreen({Key? key}) : super(key: key);
+  const SignalsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +36,26 @@ class SignalsScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
+          // Financial Disclaimer Notice
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: AppTheme.warningOrange.withValues(alpha: 0.12),
+            child: Row(
+              children: const [
+                Icon(Icons.warning_amber_rounded, color: AppTheme.warningOrange, size: 18),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'DISCLAIMER: AI signals are educational technical indicators, not financial advice.',
+                    style: TextStyle(color: AppTheme.warningOrange, fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             color: AppTheme.surfaceDark,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -97,8 +115,8 @@ class SignalsScreen extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
                                   color: sig.direction == 'LONG'
-                                      ? AppTheme.profitGreen.withOpacity(0.2)
-                                      : AppTheme.lossRed.withOpacity(0.2),
+                                      ? AppTheme.profitGreen.withValues(alpha: 0.2)
+                                      : AppTheme.lossRed.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -115,7 +133,7 @@ class SignalsScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryCyan.withOpacity(0.15),
+                              color: AppTheme.primaryCyan.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
