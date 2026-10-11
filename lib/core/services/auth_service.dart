@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:local_auth/local_auth.dart';
 
 class UserProfile {
   final String uid;
@@ -24,6 +25,7 @@ class UserProfile {
 
 class AuthService extends ChangeNotifier {
   static const _storage = FlutterSecureStorage();
+  final LocalAuthentication _localAuth = LocalAuthentication();
   
   bool _isAuthenticated = false;
   bool _isLoading = true;
@@ -73,6 +75,41 @@ class AuthService extends ChangeNotifier {
     }
 
     await _restoreLocalSession();
+  }
+
+  Future<bool> authenticateWithBiometrics() async {
+    try {
+      final bool canAuthenticateWithBiometrics = await _localAuth.canCheckBiometrics;
+      final bool canAuthenticate = canAuthenticateWithBiometrics || await _localAuth.isDeviceSupported();
+
+      if (!canAuthenticate) return false;
+
+      return await _localAuth.authenticate(
+        localizedReason: 'Authenticate with Fingerprint / Face ID to access Zulfiqar AI Terminal',
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: true,
+        ),
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error with biometric authentication: $e');
+      }
+      return false;
+    }
+  }
+
+  Future<bool> sendPasswordResetEmail(String email) async {
+    if (_isFirebaseInitialized) {
+      try {
+        await fb_auth.FirebaseAuth.instance.sendPasswordResetEmail(email: email.trim());
+        return true;
+      } catch (e) {
+        _lastError = e.toString().replaceFirst(RegExp(r'\[.*?\]\s*'), '');
+        notifyListeners();
+      }
+    }
+    return false;
   }
 
   Future<void> _loadProfileFromFbUser(fb_auth.User fbUser) async {
@@ -205,6 +242,7 @@ class AuthService extends ChangeNotifier {
         );
         if (credential.user != null) {
           await credential.user!.updateDisplayName(name.trim());
+          await credential.user!.sendEmailVerification();
           await _loadProfileFromFbUser(credential.user!);
           _isLoading = false;
           notifyListeners();
