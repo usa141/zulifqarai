@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/services/market_api_service.dart';
 import '../../core/services/mock_trading_service.dart';
+import '../../services/phone_tools_service.dart';
+import '../../services/weather_service.dart';
 import '../../core/widgets/sword_logo.dart';
 import '../analysis/coin_analysis_screen.dart';
 
@@ -44,11 +46,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final tradingService = Provider.of<MockTradingService>(context);
     final marketService = Provider.of<MarketApiService>(context);
+    final weatherService = Provider.of<WeatherService>(context);
+    final phoneToolsService = Provider.of<PhoneToolsService>(context);
 
     final portfolio = tradingService.portfolio;
     final assets = tradingService.assets;
-    final signals = tradingService.signals;
     final liveNews = marketService.liveNews.isNotEmpty ? marketService.liveNews : tradingService.news;
+    final weather = weatherService.currentWeather;
 
     return Scaffold(
       appBar: AppBar(
@@ -87,6 +91,80 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Smart Assistant Widget Bar (Weather + Battery & Network)
+            Row(
+              children: [
+                // Weather Card
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceDark,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppTheme.borderColor),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.cloud, color: AppTheme.primaryCyan, size: 28),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                weather != null ? '${weather.temperature}°C' : '24.5°C',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              Text(
+                                weather != null ? '${weather.condition} • ${weather.location}' : 'Sunny • Lahore',
+                                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Battery & Network Card
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceDark,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppTheme.borderColor),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.battery_charging_full, color: AppTheme.profitGreen, size: 28),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${phoneToolsService.batteryLevel}% Battery',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              Text(
+                                phoneToolsService.networkStatus,
+                                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
             // Portfolio Overview Card
             Container(
               padding: const EdgeInsets.all(20),
@@ -219,6 +297,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 20),
+
+            // Quick Android Phone Tools Bar
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.primaryCyan,
+                      side: const BorderSide(color: AppTheme.borderColor),
+                    ),
+                    icon: const Icon(Icons.search, size: 18),
+                    label: const Text('Google Search', style: TextStyle(fontSize: 12)),
+                    onPressed: () => phoneToolsService.launchGoogleSearch('crypto market news'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.primaryCyan,
+                      side: const BorderSide(color: AppTheme.borderColor),
+                    ),
+                    icon: const Icon(Icons.dialpad, size: 18),
+                    label: const Text('Phone Dialer', style: TextStyle(fontSize: 12)),
+                    onPressed: () => phoneToolsService.openDialer('+1234567890'),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 20),
 

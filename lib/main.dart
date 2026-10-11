@@ -7,6 +7,10 @@ import 'core/services/market_api_service.dart';
 import 'core/services/mock_trading_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/signal_detector_service.dart';
+import 'services/phone_tools_service.dart';
+import 'services/tts_service.dart';
+import 'services/voice_service.dart';
+import 'services/weather_service.dart';
 import 'core/widgets/sword_logo.dart';
 import 'features/auth/login_screen.dart';
 import 'features/shell_screen.dart';
@@ -17,7 +21,6 @@ void main() {
   runApp(const TradeJarvisApp());
 }
 
-// IMPORTANT: Entry point required for System Floating Overlay Window outside the app
 @pragma("vm:entry-point")
 void overlayMain() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +42,10 @@ class TradeJarvisApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => GeminiAiService()),
         ChangeNotifierProvider(create: (_) => SignalDetectorService()),
         ChangeNotifierProvider(create: (_) => NotificationService()),
+        ChangeNotifierProvider(create: (_) => WeatherService()),
+        ChangeNotifierProvider(create: (_) => PhoneToolsService()),
+        ChangeNotifierProvider(create: (_) => TtsService()),
+        ChangeNotifierProvider(create: (_) => VoiceService()),
         ChangeNotifierProxyProvider<MarketApiService, MockTradingService>(
           create: (_) => MockTradingService(),
           update: (_, marketApi, tradingService) {
